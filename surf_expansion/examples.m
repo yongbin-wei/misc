@@ -1,0 +1,56 @@
+% Example scripts using remesh and computing vertexDistance/surfaceArea
+clear, clc, close all
+
+data_path_chimp = '/Users/XXX/XXX';
+chimp_subject = 'subj001';
+
+% remesh
+remesh([data_path_chimp,'/',chimp_subject], ...
+    '/Applications/freesurfer/subjects/fsaverage', 'lh', 'pial');
+remesh([data_path_chimp,'/',chimp_subject], ...
+    '/Applications/freesurfer/subjects/fsaverage', 'rh',  'pial');
+
+% vertex distance and face area
+lh_distance = computeVertexDistance(fullfile(data_path_chimp, ...
+    chimp_subject, 'surf', 'lh.pial.fsaverage'));
+rh_distance = computeVertexDistance(fullfile(data_path_chimp, ...
+    chimp_subject, 'surf', 'rh.pial.fsaverage'));
+
+[lh_area,lh_areaVertex] = computeFaceArea(fullfile(data_path_chimp, ...
+    chimp_subject, 'surf', 'lh.pial.fsaverage'));
+[rh_area,rh_areaVertex] = computeFaceArea(fullfile(data_path_chimp, ...
+    chimp_subject, 'surf', 'rh.pial.fsaverage'));
+
+% write to curv file
+[~,tmp] = read_curv('/Applications/freesurfer/subjects/fsaverage/surf/lh.thickness');
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'lh.vertexDistance'), lh_distance, tmp);
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'lh.faceArea'), lh_area, tmp);
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'lh.vertexFaceArea'), lh_areaVertex, tmp);
+
+[~,tmp] = read_curv('/Applications/freesurfer/subjects/fsaverage/surf/rh.thickness');
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'rh.vertexDistance'), rh_distance, tmp);
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'rh.faceArea'), rh_area, tmp);
+write_curv(fullfile(data_path_chimp, chimp_subject, 'surf', ...
+    'rh.vertexFaceArea'), rh_areaVertex, tmp);
+
+% group into regional values
+[regionalDistance_lh, regionDescriptions_lh] = groupValues(lh_distance, ...
+    '/Applications/freesurfer/subjects/fsaverage/', 'aparc', 'lh');
+[regionalDistance_lh, regionDescriptions_rh] = groupValues(rh_distance, ...
+    '/Applications/freesurfer/subjects/fsaverage/', 'aparc', 'rh');
+
+[regionalArea_lh, regionDescriptions_lh] = groupValues(lh_areaVertex, ...
+    '/Applications/freesurfer/subjects/fsaverage/', 'aparc', 'lh');
+[regionalArea_lh, regionDescriptions_rh] = groupValues(rh_areaVertex, ...
+    '/Applications/freesurfer/subjects/fsaverage/', 'aparc', 'rh');
+
+% surface smooth
+subj = [data_path_chimp, '/', chimp_subject];
+surfaceSmooth([data_path_chimp, '/', chimp_subject, '/surf/lh.thickness'], ...
+    subj, 'lh', 10)
+
